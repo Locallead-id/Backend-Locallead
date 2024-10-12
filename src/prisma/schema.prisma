@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id          Int          @id @default(autoincrement())
+  email       String       @unique
+  password    String
+  name        String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  assessments Assessment[]
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  role      Role
+  companyId Int?
+  company   Company?  @relation(fields: [companyId], references: [id])
+  profile   Profile?
+  results   Result[]
+  payments  Payment[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Profile {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int       @unique
+  fullName    String
+  address     String?
+  dateOfBirth DateTime?
+  joinDate    DateTime?
+  imageUrl    String?
+  jobId       Int?
+  job         Job?      @relation(fields: [jobId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  imageUrl  String?
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Job {
+  id            Int       @id @default(autoincrement())
+  jobDepartment String?
+  jobTitle      String
+  jobBranch     String
+  profiles      Profile[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Assessment {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String
+  imageUrl    String?
+  duration    Int
+  createdBy   Admin      @relation(fields: [adminId], references: [id])
+  adminId     Int
+  questions   Question[]
+  results     Result[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Question {
+  id            Int          @id @default(autoincrement())
+  assessment    Assessment   @relation(fields: [assessmentId], references: [id])
+  assessmentId  Int
+  text          String
+  type          QuestionType
+  choices       Json?
+  correctAnswer Json
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SCALE
+}
+
+model Result {
+  id           Int        @id @default(autoincrement())
+  user         User       @relation(fields: [userId], references: [id])
+  userId       Int
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  assessmentId Int
+  score        Float
+  timeFinished DateTime
+  answers      Json
+  resultType   String?
+  skills       Json
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Payment {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+  amount        Float
+  status        Status
+  transactionId String
+  paymentMethod String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum Status {
+  PENDING
+  COMPLETED
+  FAILED
+}
