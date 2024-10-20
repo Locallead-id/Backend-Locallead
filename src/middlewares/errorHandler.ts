@@ -1,6 +1,8 @@
-import { NextFunction, Response, Request } from "express";
+import { NextFunction, Response } from "express";
 
-export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+import { AuthRequest } from "../types/types";
+
+export const errorHandler = (err: Error, req: AuthRequest, res: Response, next: NextFunction) => {
   let status = 500;
   let message = "Internal server error";
 
