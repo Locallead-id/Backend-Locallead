@@ -27,6 +27,7 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
       message = "Insufficient privileges to do this action.";
       break;
     case "NotFound":
+    case "NotFoundError":
       status = 404;
       message = "Data not found!";
       break;
