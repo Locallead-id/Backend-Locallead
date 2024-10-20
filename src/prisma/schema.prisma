@@ -7,28 +7,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Admin {
-  id          Int          @id @default(autoincrement())
-  email       String       @unique
-  password    String
-  name        String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  assessments Assessment[]
-}
+// model Admin {
+//   id          Int          @id @default(autoincrement())
+//   email       String       @unique
+//   password    String
+//   name        String
+//   createdAt   DateTime     @default(now())
+//   updatedAt   DateTime     @updatedAt
+//   assessments Assessment[]
+// }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  password  String
-  role      Role
-  companyId Int?
-  company   Company?  @relation(fields: [companyId], references: [id])
-  profile   Profile?
-  results   Result[]
-  payments  Payment[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         Int          @id @default(autoincrement())
+  email      String       @unique
+  password   String
+  role       Role         @default(USER)
+  companyId  Int?
+  company    Company?     @relation(fields: [companyId], references: [id])
+  profile    Profile?
+  results    Result[]
+  payments   Payment[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Assessment Assessment[]
 }
 
 enum Role {
@@ -38,7 +39,7 @@ enum Role {
 
 model Profile {
   id          Int       @id @default(autoincrement())
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int       @unique
   fullName    String
   address     String?
@@ -76,8 +77,8 @@ model Assessment {
   description String
   imageUrl    String?
   duration    Int
-  createdBy   Admin      @relation(fields: [adminId], references: [id])
-  adminId     Int
+  createdBy   User       @relation(fields: [userId], references: [id])
+  userId      Int
   questions   Question[]
   results     Result[]
   createdAt   DateTime   @default(now())
