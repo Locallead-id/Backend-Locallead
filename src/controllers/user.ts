@@ -57,7 +57,9 @@ export class UserController {
 
   static async getOwnUserDetail(req: AuthRequest, res: Response, next: NextFunction) {
     try {
+      if (!req.user) throw { name: "DataNotFound" };
       const { id } = req.user;
+
       const user = await prisma.user.findUnique({ where: { id: id }, include: { profile: true }, omit: { password: true } });
 
       if (!user || !id) throw { name: "DataNotFound" };

@@ -1,5 +1,4 @@
 import { Response, NextFunction } from "express";
-
 import { AuthRequest } from "../types/types";
 import prisma from "../database/prisma";
 
