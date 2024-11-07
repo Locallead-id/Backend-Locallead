@@ -28,6 +28,7 @@ export const errorHandler = (err: Error, req: AuthRequest, res: Response, next: 
       status = 403;
       message = "Insufficient privileges to do this action.";
       break;
+    case "DataNotFound":
     case "NotFound":
     case "NotFoundError":
       status = 404;
@@ -35,5 +36,5 @@ export const errorHandler = (err: Error, req: AuthRequest, res: Response, next: 
       break;
   }
   console.log(err);
-  res.status(status).json(message);
+  res.status(status).json({ message: message });
 };

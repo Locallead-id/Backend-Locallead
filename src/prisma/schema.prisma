@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["omitApi"]
 }
 
@@ -7,16 +7,6 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
-
-// model Admin {
-//   id          Int          @id @default(autoincrement())
-//   email       String       @unique
-//   password    String
-//   name        String
-//   createdAt   DateTime     @default(now())
-//   updatedAt   DateTime     @updatedAt
-//   assessments Assessment[]
-// }
 
 model User {
   id         Int          @id @default(autoincrement())
@@ -51,12 +41,12 @@ model Profile {
   job         Job?      @relation(fields: [jobId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  isPremium   Boolean   @default(false)
 }
 
 model Company {
   id        Int      @id @default(autoincrement())
   name      String
-  imageUrl  String?
   users     User[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -66,7 +56,6 @@ model Job {
   id            Int       @id @default(autoincrement())
   jobDepartment String?
   jobTitle      String
-  jobBranch     String
   profiles      Profile[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -79,11 +68,13 @@ model Assessment {
   imageUrl    String?
   duration    Int
   createdBy   User       @relation(fields: [userId], references: [id])
-  userId      Int
+  // adminId     Int
   questions   Question[]
   results     Result[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  // User        User?      @relation(fields: [userId], references: [id])
+  userId      Int
 }
 
 model Question {
@@ -114,7 +105,7 @@ model Result {
   timeFinished DateTime
   answers      Json
   resultType   String?
-  skills       Json
+  skills       Json?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
