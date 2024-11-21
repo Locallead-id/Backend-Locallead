@@ -2,7 +2,7 @@ import { NextFunction, Response } from "express";
 
 import { AuthRequest } from "../types/types";
 
-export const errorHandler = (err: Error, req: AuthRequest, res: Response, next: NextFunction) => {
+export const errorHandler = (err: Error, _: AuthRequest, res: Response, __: NextFunction) => {
   let status = 500;
   let message = "Internal server error";
 

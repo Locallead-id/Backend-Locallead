@@ -21,8 +21,11 @@ CREATE TABLE `Profile` (
     `dateOfBirth` DATETIME(3) NULL,
     `joinDate` DATETIME(3) NULL,
     `imageUrl` VARCHAR(191) NULL,
-    `jobId` INTEGER NULL,
+    `jobTitle` VARCHAR(191) NOT NULL,
+    `jobDepartment` VARCHAR(191) NULL,
+    `jobBranch` VARCHAR(191) NULL,
     `isPremium` BOOLEAN NOT NULL DEFAULT false,
+    `premiumExpiresAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -42,17 +45,6 @@ CREATE TABLE `Company` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Job` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `jobDepartment` VARCHAR(191) NULL,
-    `jobTitle` VARCHAR(191) NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `Assessment` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
@@ -60,6 +52,8 @@ CREATE TABLE `Assessment` (
     `imageUrl` VARCHAR(191) NULL,
     `duration` INTEGER NOT NULL,
     `userId` INTEGER NOT NULL,
+    `price` DOUBLE NOT NULL,
+    `isActive` BOOLEAN NOT NULL DEFAULT true,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -69,11 +63,11 @@ CREATE TABLE `Assessment` (
 -- CreateTable
 CREATE TABLE `Question` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `order` INTEGER NOT NULL,
     `assessmentId` INTEGER NOT NULL,
-    `text` VARCHAR(191) NOT NULL,
+    `text` TEXT NOT NULL,
     `type` ENUM('MULTIPLE_CHOICE', 'TRUE_FALSE', 'SCALE') NOT NULL,
-    `choices` JSON NULL,
-    `correctAnswer` JSON NULL,
+    `options` JSON NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -85,13 +79,13 @@ CREATE TABLE `Result` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `userId` INTEGER NOT NULL,
     `assessmentId` INTEGER NOT NULL,
-    `score` DOUBLE NOT NULL,
-    `timeFinished` DATETIME(3) NOT NULL,
+    `score` JSON NOT NULL,
+    `timeDuration` INTEGER NOT NULL,
     `answers` JSON NOT NULL,
-    `resultType` VARCHAR(191) NULL,
+    `status` ENUM('IN_PROGRESS', 'COMPLETED', 'EXPIRED') NOT NULL DEFAULT 'IN_PROGRESS',
     `skills` JSON NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
+    `startedAt` DATETIME(3) NOT NULL,
+    `completedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -105,6 +99,7 @@ CREATE TABLE `Payment` (
     `transactionId` VARCHAR(191) NOT NULL,
     `paymentMethod` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `expireAt` DATETIME(3) NOT NULL,
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `Payment_transactionId_key`(`transactionId`),
@@ -116,9 +111,6 @@ ALTER TABLE `User` ADD CONSTRAINT `User_companyId_fkey` FOREIGN KEY (`companyId`
 
 -- AddForeignKey
 ALTER TABLE `Profile` ADD CONSTRAINT `Profile_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `Profile` ADD CONSTRAINT `Profile_jobId_fkey` FOREIGN KEY (`jobId`) REFERENCES `Job`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Assessment` ADD CONSTRAINT `Assessment_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

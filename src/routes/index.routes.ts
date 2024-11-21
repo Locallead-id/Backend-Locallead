@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 
 import { errorHandler } from "../middlewares/errorHandler";
-import { IndexController } from "../controllers";
+import { IndexController } from "../controllers/index.controller";
 import { router as userRouter } from "./user.routes";
 import { router as authRouter } from "./auth.routes";
 import { authentication } from "../middlewares/authentication";
