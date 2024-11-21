@@ -1,13 +1,17 @@
 import { Response, NextFunction } from "express";
+
 import { AuthRequest } from "../types/types";
 import prisma from "../database/prisma";
 
 export const authorization = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { userId } = req.params;
+    if (!req.user || !req.user.id) throw { name: "Unauthenticated" };
+
+    if (!req.user.id) throw { name: "Unauthenticated" };
+
     const foundUser = await prisma.user.findUnique({
       where: {
-        id: Number(userId),
+        id: Number(req.user.id),
       },
     });
     if (!foundUser) {

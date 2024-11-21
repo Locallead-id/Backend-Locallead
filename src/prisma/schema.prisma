@@ -9,18 +9,18 @@ datasource db {
 }
 
 model User {
-  id         Int          @id @default(autoincrement())
-  email      String       @unique
-  password   String
-  role       Role         @default(USER)
-  companyId  Int?
-  company    Company?     @relation(fields: [companyId], references: [id])
-  profile    Profile?
-  results    Result[]
-  payments   Payment[]
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  Assessment Assessment[]
+  id          Int          @id @default(autoincrement())
+  email       String       @unique
+  password    String
+  role        Role         @default(USER)
+  companyId   Int? // Optional relationship with Company
+  company     Company?     @relation(fields: [companyId], references: [id])
+  profile     Profile?
+  assessments Assessment[] // Assessments created by the user (if admin)
+  results     Result[] // Results of assessments taken by the user
+  payments    Payment[] // Payment records
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 enum Role {
@@ -29,36 +29,29 @@ enum Role {
 }
 
 model Profile {
-  id          Int       @id @default(autoincrement())
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      Int       @unique
-  fullName    String
-  address     String?
-  dateOfBirth DateTime?
-  joinDate    DateTime?
-  imageUrl    String?
-  jobId       Int?
-  job         Job?      @relation(fields: [jobId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  isPremium   Boolean   @default(false)
+  id               Int       @id @default(autoincrement())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           Int       @unique
+  fullName         String
+  address          String?
+  dateOfBirth      DateTime?
+  joinDate         DateTime? // When the user joined
+  imageUrl         String?
+  jobTitle         String
+  jobDepartment    String?
+  jobBranch        String?
+  isPremium        Boolean   @default(false) // For payment-based premium access
+  premiumExpiresAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model Company {
   id        Int      @id @default(autoincrement())
-  name      String
-  users     User[]
+  name      String   @unique
+  users     User[] // Relationship to users
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model Job {
-  id            Int       @id @default(autoincrement())
-  jobDepartment String?
-  jobTitle      String
-  profiles      Profile[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
 }
 
 model Assessment {
@@ -66,27 +59,27 @@ model Assessment {
   name        String
   description String
   imageUrl    String?
-  duration    Int
+  duration    Int // Duration of the assessment in minutes
+  userId      Int // Created by admin user
   createdBy   User       @relation(fields: [userId], references: [id])
-  // adminId     Int
-  questions   Question[]
-  results     Result[]
+  price       Float
+  isActive    Boolean    @default(true)
+  questions   Question[] // Questions related to this assessment
+  results     Result[] // Results of the assessment
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-  // User        User?      @relation(fields: [userId], references: [id])
-  userId      Int
 }
 
 model Question {
-  id            Int          @id @default(autoincrement())
-  assessment    Assessment   @relation(fields: [assessmentId], references: [id])
-  assessmentId  Int
-  text          String
-  type          QuestionType
-  choices       Json?
-  correctAnswer Json
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id           Int          @id @default(autoincrement())
+  order        Int
+  assessmentId Int
+  assessment   Assessment   @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  text         String       @db.Text
+  type         QuestionType
+  options      Json? // For multiple choice questions
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 }
 
 enum QuestionType {
@@ -96,33 +89,40 @@ enum QuestionType {
 }
 
 model Result {
-  id           Int        @id @default(autoincrement())
-  user         User       @relation(fields: [userId], references: [id])
+  id           Int          @id @default(autoincrement())
   userId       Int
-  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
   assessmentId Int
-  score        Float
-  timeFinished DateTime
-  answers      Json
-  resultType   String?
+  assessment   Assessment   @relation(fields: [assessmentId], references: [id])
+  score        Json
+  timeDuration Int
+  answers      Json // User's answers
+  status       ResultStatus @default(IN_PROGRESS)
   skills       Json?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  startedAt    DateTime
+  completedAt  DateTime     @default(now())
+}
+
+enum ResultStatus {
+  IN_PROGRESS
+  COMPLETED
+  EXPIRED
 }
 
 model Payment {
-  id            Int      @id @default(autoincrement())
-  user          User     @relation(fields: [userId], references: [id])
+  id            Int           @id @default(autoincrement())
   userId        Int
+  user          User          @relation(fields: [userId], references: [id])
   amount        Float
-  status        Status
-  transactionId String
+  status        PaymentStatus
+  transactionId String        @unique // To track payments with Midtrans
   paymentMethod String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime      @default(now())
+  expireAt      DateTime
+  updatedAt     DateTime      @updatedAt
 }
 
-enum Status {
+enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
