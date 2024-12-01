@@ -25,7 +25,6 @@
     "firebase-admin": "^12.7.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
-    "pg": "^8.13.0",
     "prisma": "^5.20.0",
     "reflect-metadata": "^0.2.2",
     "ts-express-api-starter": "file:"
@@ -38,12 +37,10 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.7.4",
-    "@types/pg": "^8.11.10",
     "@typescript-eslint/eslint-plugin": "^8.8.0",
     "@typescript-eslint/parser": "^8.8.0",
     "eslint": "^9.11.1",
     "jest": "^29.7.0",
-    "sequelize-cli": "^6.6.2",
     "ts-jest": "^29.2.5",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2"
