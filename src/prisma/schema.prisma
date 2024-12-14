@@ -13,8 +13,6 @@ model User {
   email       String       @unique
   password    String
   role        Role         @default(USER)
-  companyId   Int? // Optional relationship with Company
-  company     Company?     @relation(fields: [companyId], references: [id])
   profile     Profile?
   assessments Assessment[] // Assessments created by the user (if admin)
   results     Result[] // Results of assessments taken by the user
@@ -29,29 +27,20 @@ enum Role {
 }
 
 model Profile {
-  id               Int       @id @default(autoincrement())
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId           Int       @unique
-  fullName         String
-  address          String?
-  dateOfBirth      DateTime?
-  joinDate         DateTime? // When the user joined
-  imageUrl         String?
-  jobTitle         String
-  jobDepartment    String?
-  jobBranch        String?
-  isPremium        Boolean   @default(false) // For payment-based premium access
-  premiumExpiresAt DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-}
-
-model Company {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  users     User[] // Relationship to users
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int       @id @default(autoincrement())
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        Int       @unique
+  fullName      String
+  address       String?
+  dateOfBirth   DateTime?
+  joinDate      DateTime? // When the user joined
+  imageUrl      String?
+  jobTitle      String
+  jobDepartment String?
+  jobBranch     String?
+  isPremium     Boolean   @default(false) // For payment-based premium access
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Assessment {
@@ -62,7 +51,7 @@ model Assessment {
   duration    Int // Duration of the assessment in minutes
   userId      Int // Created by admin user
   createdBy   User       @relation(fields: [userId], references: [id])
-  price       Float
+  price       Float? // Option if price is on each module
   isActive    Boolean    @default(true)
   questions   Question[] // Questions related to this assessment
   results     Result[] // Results of the assessment
@@ -110,16 +99,17 @@ enum ResultStatus {
 }
 
 model Payment {
-  id            Int           @id @default(autoincrement())
-  userId        Int
-  user          User          @relation(fields: [userId], references: [id])
-  amount        Float
-  status        PaymentStatus
-  transactionId String        @unique // To track payments with Midtrans
-  paymentMethod String
-  createdAt     DateTime      @default(now())
-  expireAt      DateTime
-  updatedAt     DateTime      @updatedAt
+  id               Int           @id @default(autoincrement())
+  userId           Int
+  user             User          @relation(fields: [userId], references: [id])
+  amount           Float
+  status           PaymentStatus
+  transactionId    String        @unique // To track payments with Midtrans
+  transactionToken String
+  paymentMethod    String
+  createdAt        DateTime      @default(now())
+  expireAt         DateTime
+  updatedAt        DateTime      @updatedAt
 }
 
 enum PaymentStatus {

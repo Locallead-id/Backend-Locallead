@@ -15,6 +15,14 @@ export const errorHandler = (err: Error, _: AuthRequest, res: Response, __: Next
       status = 400;
       message = "Please input your password!";
       break;
+    case "InvalidInput":
+      status = 400;
+      message = "Some inputs are invalid or incorrect. Please make sure you fill all the input with the correct format";
+      break;
+    case "InputRequired":
+      status = 400;
+      message = "Some inputs are missing. Please make sure you have already fill all the required input.";
+      break;
     case "Unauthorized":
       status = 401;
       message = "Invalid email or password.";

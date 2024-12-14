@@ -19,11 +19,11 @@ export class AssessmentController {
 
   static async getAssessmentById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const { assessmentId } = req.params;
 
-      if (!id) throw { name: "DataNotFound" };
+      if (!assessmentId) throw { name: "DataNotFound" };
 
-      const assessment = await prisma.assessment.findUnique({ where: { id: Number(id) }, include: { questions: true } });
+      const assessment = await prisma.assessment.findUnique({ where: { id: Number(assessmentId) }, include: { questions: true } });
 
       if (!assessment) throw { name: "DataNotFound" };
 
@@ -35,14 +35,14 @@ export class AssessmentController {
 
   static async startAssessment(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
-      if (!id) throw { name: "DataNotFound" };
+      const { assessmentId } = req.params;
+      if (!assessmentId) throw { name: "DataNotFound" };
 
       const userId = req.user?.id;
       if (!userId) throw { name: "Unauthenticated" };
 
       const assessment = await prisma.assessment.findFirst({
-        where: { id: Number(id), isActive: true },
+        where: { id: Number(assessmentId), isActive: true },
         include: {
           questions: { select: { id: true, text: true, type: true, options: true, order: true }, orderBy: { order: "asc" } },
         },
@@ -50,29 +50,8 @@ export class AssessmentController {
 
       if (!assessment) throw { name: "DataNotFound" };
 
-      // Recent submission validation
-
-      const recentTimeValidation = new Date();
-      recentTimeValidation.setDate(recentTimeValidation.getDate() - 30);
-
-      const recentSubmission = await prisma.result.findFirst({
-        where: { userId, assessmentId: Number(id), status: "COMPLETED", completedAt: { gte: recentTimeValidation } },
-        orderBy: { completedAt: "desc" },
-      });
-
-      if (recentSubmission) {
-        const daysSinceLastSubmission = Math.ceil(new Date().getTime() - recentSubmission.completedAt!.getTime()) / (1000 * 60 * 60 * 24);
-
-        res.status(400).json({
-          message: `You have recently completed this assessment Please wait ${30 - daysSinceLastSubmission} more days before retaking.`,
-          data: { lastSubmissionDate: recentSubmission.completedAt, daysRemaining: 30 - daysSinceLastSubmission },
-        });
-        return;
-      }
-
-      // Assessment in progress validation
-
-      const existingResult = await prisma.result.findFirst({ where: { userId, assessmentId: Number(id), status: "IN_PROGRESS" } });
+      // ** Assessment in progress validation **
+      const existingResult = await prisma.result.findFirst({ where: { userId, assessmentId: Number(assessmentId), status: "IN_PROGRESS" } });
 
       if (existingResult) {
         res.status(200).json({ message: "Existing assessment in progress", data: existingResult });
@@ -82,10 +61,10 @@ export class AssessmentController {
       const newResult = await prisma.result.create({
         data: {
           userId: userId,
-          assessmentId: Number(id),
+          assessmentId: Number(assessmentId),
           status: "IN_PROGRESS",
           startedAt: new Date(),
-          answers: {},
+          answers: [],
           score: 0,
           timeDuration: 0,
         },
@@ -111,37 +90,34 @@ export class AssessmentController {
 
   static async submitAssessment(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { resultId } = req.params;
+      const { assessmentId } = req.params;
       const { answers } = req.body;
       const userId = req.user?.id;
 
       if (!userId) throw { name: "Unauthenticated" };
-      if (!resultId) throw { name: "DataNotFound" };
-      if (!answers) throw { name: "InvalidInput" };
+      if (!assessmentId) throw { name: "DataNotFound" };
+      if (!answers) throw { name: "InputRequired" };
 
-      const existingResult = await prisma.result.findUnique({
+      const existingResult = await prisma.result.findFirst({
         where: {
-          id: Number(resultId),
+          assessmentId: Number(assessmentId),
           userId: userId,
-          status: "IN_PROGRESS",
-        },
-        include: {
-          assessment: {
-            include: {
-              questions: true,
-            },
-          },
         },
       });
 
-      if (!existingResult) throw { name: "DataNotFound" };
+      if (!existingResult) throw { name: "AssessmentNotStarted" };
+      if (existingResult?.status === "COMPLETED") throw { name: "AlreadyTaken" };
 
-      const processedResult = await axios(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, data: { respondents: answers } });
+      const results = await prisma.result.findMany({});
+      const respondents = results.map((result) => ({ id: result.userId, responses: result.answers }));
+      respondents.push({ id: userId, responses: answers });
+
+      const processedResult = await axios(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, data: { respondents } });
 
       if (!processedResult) throw { name: "InternalServerError" };
 
       const updatedResult = await prisma.result.update({
-        where: { id: Number(resultId) },
+        where: { assessmentId: Number(assessmentId), userId, id: existingResult.id },
         data: {
           answers,
           score: processedResult.data,
