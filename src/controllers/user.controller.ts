@@ -49,24 +49,6 @@ export class UserController {
     }
   }
 
-  static async getLoggedUserAssessmentHistories(req: AuthRequest, res: Response, next: NextFunction) {
-    try {
-      if (!req.user || !req.user.id) throw { name: "Unauthenticated" };
-
-      const { id } = req.user;
-
-      const foundUser = await prisma.user.findUnique({ where: { id: Number(id) } });
-
-      if (!foundUser) throw { name: "DataNotFound" };
-
-      const assessments = await prisma.result.findMany({ where: { userId: Number(id) } });
-
-      res.status(200).json({ message: "Assessments history retrieved successfully", data: assessments });
-    } catch (err) {
-      next(err);
-    }
-  }
-
   static async getLoggedUserPaymentHistories(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user || !req.user.id) throw { name: "Unauthenticated" };
