@@ -4,7 +4,6 @@ CREATE TABLE `User` (
     `email` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
     `role` ENUM('USER', 'ADMIN') NOT NULL DEFAULT 'USER',
-    `companyId` INTEGER NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -21,26 +20,11 @@ CREATE TABLE `Profile` (
     `dateOfBirth` DATETIME(3) NULL,
     `joinDate` DATETIME(3) NULL,
     `imageUrl` VARCHAR(191) NULL,
-    `jobTitle` VARCHAR(191) NOT NULL,
-    `jobDepartment` VARCHAR(191) NULL,
-    `jobBranch` VARCHAR(191) NULL,
     `isPremium` BOOLEAN NOT NULL DEFAULT false,
-    `premiumExpiresAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `Profile_userId_key`(`userId`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `Company` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(191) NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
-
-    UNIQUE INDEX `Company_name_key`(`name`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -52,7 +36,7 @@ CREATE TABLE `Assessment` (
     `imageUrl` VARCHAR(191) NULL,
     `duration` INTEGER NOT NULL,
     `userId` INTEGER NOT NULL,
-    `price` DOUBLE NOT NULL,
+    `price` DOUBLE NULL,
     `isActive` BOOLEAN NOT NULL DEFAULT true,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
@@ -97,6 +81,7 @@ CREATE TABLE `Payment` (
     `amount` DOUBLE NOT NULL,
     `status` ENUM('PENDING', 'COMPLETED', 'FAILED') NOT NULL,
     `transactionId` VARCHAR(191) NOT NULL,
+    `transactionToken` VARCHAR(191) NOT NULL,
     `paymentMethod` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `expireAt` DATETIME(3) NOT NULL,
@@ -105,9 +90,6 @@ CREATE TABLE `Payment` (
     UNIQUE INDEX `Payment_transactionId_key`(`transactionId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- AddForeignKey
-ALTER TABLE `User` ADD CONSTRAINT `User_companyId_fkey` FOREIGN KEY (`companyId`) REFERENCES `Company`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Profile` ADD CONSTRAINT `Profile_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
