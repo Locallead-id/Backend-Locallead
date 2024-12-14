@@ -33,11 +33,14 @@ export class UserController {
 
       if (!foundUser) throw { name: "DataNotFound" };
 
+      // Implement Image Upload later
       const { address, dateOfBirth, imageUrl } = req.body;
+
+      const formattedDate = new Date(dateOfBirth);
 
       const updatedUser = await prisma.profile.update({
         where: { id: Number(id) },
-        data: { address, dateOfBirth, imageUrl },
+        data: { address, dateOfBirth: formattedDate, imageUrl },
       });
 
       res.status(200).json({ message: "User Data updated successfully", data: updatedUser });

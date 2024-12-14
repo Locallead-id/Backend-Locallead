@@ -15,11 +15,7 @@ async function main() {
           dateOfBirth: new Date("1990-01-01"),
           joinDate: new Date("2020-01-01"),
           imageUrl: "https://example.com/images/john.jpg",
-          jobTitle: "Software Engineer",
-          jobDepartment: "Engineering",
-          jobBranch: "Headquarters",
           isPremium: true,
-          premiumExpiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
         },
       },
     },
@@ -37,11 +33,7 @@ async function main() {
           dateOfBirth: new Date("1985-05-15"),
           joinDate: new Date("2019-06-01"),
           imageUrl: "https://example.com/images/jane.jpg",
-          jobTitle: "Product Manager",
-          jobDepartment: "Product",
-          jobBranch: "Regional Office",
           isPremium: true,
-          premiumExpiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
         },
       },
     },
@@ -75,10 +67,10 @@ async function main() {
   // Create Questions for Assessments
   await prisma.question.createMany({
     data: [
-      { order: 1, assessmentId: assessment1.id, text: "How often do you take risks?", type: "SCALE", options: JSON.stringify([1, 2, 3, 4, 5]) },
-      { order: 2, assessmentId: assessment1.id, text: "How well do you manage stress?", type: "SCALE", options: JSON.stringify([1, 2, 3, 4, 5]) },
-      { order: 1, assessmentId: assessment2.id, text: "Rate your coding skills.", type: "SCALE", options: JSON.stringify([1, 2, 3, 4, 5]) },
-      { order: 2, assessmentId: assessment2.id, text: "Rate your problem-solving skills.", type: "SCALE", options: JSON.stringify([1, 2, 3, 4, 5]) },
+      { order: 1, assessmentId: assessment1.id, text: "How often do you take risks?", type: "SCALE", options: [1, 2, 3, 4, 5] },
+      { order: 2, assessmentId: assessment1.id, text: "How well do you manage stress?", type: "SCALE", options: [1, 2, 3, 4, 5] },
+      { order: 1, assessmentId: assessment2.id, text: "Rate your coding skills.", type: "SCALE", options: [1, 2, 3, 4, 5] },
+      { order: 2, assessmentId: assessment2.id, text: "Rate your problem-solving skills.", type: "SCALE", options: [1, 2, 3, 4, 5] },
     ],
   });
 
@@ -87,14 +79,11 @@ async function main() {
     data: {
       userId: user2.id,
       assessmentId: assessment1.id,
-      score: JSON.stringify({ total: 8, average: 4 }),
+      score: { total: 8, average: 4 },
       timeDuration: 25,
-      answers: JSON.stringify([
-        { questionId: 1, answer: 4 },
-        { questionId: 2, answer: 4 },
-      ]),
+      answers: [1, 2, 3, 4, 5],
       status: "COMPLETED",
-      skills: JSON.stringify(["Risk-taking", "Stress Management"]),
+      skills: ["Risk-taking", "Stress Management"],
       startedAt: new Date("2023-10-01T10:00:00Z"),
       completedAt: new Date("2023-10-01T10:25:00Z"),
     },

@@ -10,11 +10,11 @@ export const authentication = async (req: AuthRequest, res: Response, next: Next
     if (!auth) {
       throw { name: "Unauthenticated" };
     }
-
     const [type, token] = auth.split(" ");
     if (!type || type !== "Bearer") {
       throw { name: "Unauthenticated" };
     }
+
     if (!token) {
       throw { name: "Unauthenticated" };
     }

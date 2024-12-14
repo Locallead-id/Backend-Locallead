@@ -22,11 +22,11 @@ export class ResultController {
     try {
       if (!req.user || !req.user.id) throw { name: "Unauthenticated" };
       const userId = req.user.id;
-      const { resultId } = req.params;
+      const { assessmentId } = req.params;
 
       const result = await prisma.result.findFirst({
         where: {
-          id: Number(resultId),
+          assessmentId: Number(assessmentId),
           userId,
         },
       });

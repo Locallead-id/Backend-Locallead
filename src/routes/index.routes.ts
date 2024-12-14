@@ -19,7 +19,6 @@ router.get("/", IndexController.home);
 router.use("/auth", authRouter);
 router.use("/users", authentication, userRouter);
 router.use("/assessments", authentication, assessmentRouter);
-router.use("/results", authentication, userRouter);
 router.use("/admin", authentication, authorization, adminRouter);
 router.use("/payments", paymentRouter);
 router.use(errorHandler);

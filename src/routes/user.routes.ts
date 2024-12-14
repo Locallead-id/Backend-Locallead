@@ -6,5 +6,5 @@ export const router = Router();
 
 router.get("/profile", UserController.getLoggedUserDetail);
 router.put("/profile", UserController.updateLoggedUserDetail);
-router.get("/results", UserController.getLoggedUserAssessmentHistories);
-router.get("/payments", UserController.getLoggedUserPaymentHistories);
+router.get("/profile/results", UserController.getLoggedUserAssessmentHistories);
+router.get("/profile/payments", UserController.getLoggedUserPaymentHistories);

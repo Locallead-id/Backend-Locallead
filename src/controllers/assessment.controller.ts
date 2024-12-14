@@ -109,7 +109,12 @@ export class AssessmentController {
       if (existingResult?.status === "COMPLETED") throw { name: "AlreadyTaken" };
 
       const results = await prisma.result.findMany({});
-      const respondents = results.map((result) => ({ id: result.userId, responses: result.answers }));
+
+      const respondents = results.map((result) => ({
+        id: result.userId,
+        responses: result.answers,
+      }));
+
       respondents.push({ id: userId, responses: answers });
 
       const processedResult = await axios(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, data: { respondents } });
