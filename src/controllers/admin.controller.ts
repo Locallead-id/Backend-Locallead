@@ -5,12 +5,6 @@ import prisma from "../database/prisma";
 import { hashPassword } from "../helpers/bcrypt";
 
 export class AdminController {
-  // static async template(req: AuthRequest, res: Response, next: NextFunction) {
-  //   try {
-  //   } catch (err) {
-  //     next(err);
-  //   }
-  // }
   static async createUserAccount(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { email, password, name } = req.body;

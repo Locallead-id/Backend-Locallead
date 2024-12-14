@@ -42,7 +42,7 @@ export class AuthController {
       if (!foundUser) throw { name: "Unauthorized" };
       if (!compareHashedPassword(password, foundUser.password)) throw { name: "Unauthorized" };
 
-      res.status(200).json({ message: "Login success", access_token: signToken({ id: String(foundUser.id) }) });
+      res.status(200).json({ message: "Successfully login", access_token: signToken({ id: String(foundUser.id), role: foundUser.role }) });
     } catch (err) {
       next(err);
     }
