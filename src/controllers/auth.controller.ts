@@ -6,7 +6,7 @@ import { signToken } from "../helpers/jwt";
 export class AuthController {
   static async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password, name, jobTitle } = req.body;
+      const { email, password, name } = req.body;
       if (!email) throw { name: "EmailRequired" };
       if (!password) throw { name: "PasswordRequired" };
 
@@ -18,7 +18,6 @@ export class AuthController {
           profile: {
             create: {
               fullName: name,
-              jobTitle,
             },
           },
         },

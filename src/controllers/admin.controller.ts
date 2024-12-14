@@ -13,7 +13,7 @@ export class AdminController {
   // }
   static async createUserAccount(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { email, password, name, jobTitle } = req.body;
+      const { email, password, name } = req.body;
       if (!email) throw { name: "EmailRequired" };
       if (!password) throw { name: "PasswordRequired" };
 
@@ -25,7 +25,6 @@ export class AdminController {
           profile: {
             create: {
               fullName: name,
-              jobTitle,
             },
           },
         },
@@ -40,7 +39,7 @@ export class AdminController {
   static async updateUserAccount(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { userId } = req.params;
-      const { email, password, name, jobTitle, address, dateOfBirth, imageUrl, jobDepartment, jobBranch } = req.body;
+      const { email, password, name, address, dateOfBirth, imageUrl } = req.body;
 
       const foundUser = await prisma.user.findFirst({ where: { id: Number(userId) } });
       if (!foundUser) throw { name: "DataNotFound" };
@@ -53,12 +52,9 @@ export class AdminController {
             update: {
               data: {
                 fullName: name,
-                jobTitle,
                 address,
                 dateOfBirth,
                 imageUrl,
-                jobDepartment,
-                jobBranch,
               },
             },
           },
@@ -74,7 +70,7 @@ export class AdminController {
 
   static async deleteUserAccount(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { id: userId } = req.params;
+      const { userId } = req.params;
       const foundUser = await prisma.user.findFirst({ where: { id: Number(userId) } });
       if (!foundUser) throw { name: "DataNotFound" };
 

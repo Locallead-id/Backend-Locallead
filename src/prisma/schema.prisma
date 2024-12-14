@@ -27,20 +27,17 @@ enum Role {
 }
 
 model Profile {
-  id            Int       @id @default(autoincrement())
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        Int       @unique
-  fullName      String
-  address       String?
-  dateOfBirth   DateTime?
-  joinDate      DateTime? // When the user joined
-  imageUrl      String?
-  jobTitle      String
-  jobDepartment String?
-  jobBranch     String?
-  isPremium     Boolean   @default(false) // For payment-based premium access
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int       @unique
+  fullName    String
+  address     String?
+  dateOfBirth DateTime?
+  joinDate    DateTime? // When the user joined
+  imageUrl    String?
+  isPremium   Boolean   @default(false) // For payment-based premium access
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Assessment {

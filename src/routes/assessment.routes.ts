@@ -5,6 +5,6 @@ import { AssessmentController } from "../controllers/assessment.controller";
 export const router = Router();
 
 router.get("/", AssessmentController.getAllAssessments);
-router.get("/:id", AssessmentController.getAssessmentById);
-router.post("/:id/start", AssessmentController.startAssessment);
-router.delete("/:id/submit", AssessmentController.submitAssessment);
+router.get("/:assessmentId", AssessmentController.getAssessmentById);
+router.post("/:assessmentId/start", AssessmentController.startAssessment);
+router.delete("/:assessmentId/submit", AssessmentController.submitAssessment);

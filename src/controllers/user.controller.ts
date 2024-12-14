@@ -33,11 +33,11 @@ export class UserController {
 
       if (!foundUser) throw { name: "DataNotFound" };
 
-      const { address, dateOfBirth, imageUrl, jobTitle, jobDepartment, jobBranch } = req.body;
+      const { address, dateOfBirth, imageUrl } = req.body;
 
       const updatedUser = await prisma.profile.update({
         where: { id: Number(id) },
-        data: { address, dateOfBirth, imageUrl, jobTitle, jobDepartment, jobBranch },
+        data: { address, dateOfBirth, imageUrl },
       });
 
       res.status(200).json({ message: "User Data updated successfully", data: updatedUser });
