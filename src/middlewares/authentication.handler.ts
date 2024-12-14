@@ -29,7 +29,7 @@ export const authentication = async (req: AuthRequest, res: Response, next: Next
     if (!foundUser) {
       throw { name: "Unauthenticated" };
     }
-    req.user = { id: foundUser.id };
+    req.user = { id: foundUser.id, role: foundUser.role };
     next();
   } catch (err) {
     next(err);

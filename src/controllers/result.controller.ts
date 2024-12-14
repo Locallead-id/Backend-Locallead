@@ -12,7 +12,9 @@ export class ResultController {
         where: { userId },
       });
 
-      res.status(200).json({ messaage: "Results data successfully retrieved", data: results });
+      const totalAssessment = await prisma.assessment.count();
+
+      res.status(200).json({ messaage: "Results data successfully retrieved", data: results, total_assessment: totalAssessment });
     } catch (err) {
       next(err);
     }

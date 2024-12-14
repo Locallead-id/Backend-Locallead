@@ -5,6 +5,32 @@ import prisma from "../database/prisma";
 import { hashPassword } from "../helpers/bcrypt";
 
 export class AdminController {
+  static async getAllUsers(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      let users = await prisma.user.findMany({ include: { profile: true, results: true } });
+      const totalAssessment = await prisma.assessment.count();
+      users = users.map((user) => {
+        return { ...user, total_results: user.results.length, total_assessments: totalAssessment };
+      });
+      res.status(200).json({ message: "Users data retrieved successfully", data: users, total_users: users.length });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getUserById(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { userId } = req.params;
+      const user = await prisma.user.findFirst({ where: { id: Number(userId) }, include: { profile: true } });
+
+      if (!user || !userId) throw { name: "DataNotFound" };
+
+      res.status(200).json({ message: "User data retrieved successfully", data: user });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async createUserAccount(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { email, password, name } = req.body;
@@ -116,6 +142,56 @@ export class AdminController {
       const filledAssessment = await prisma.assessment.findFirst({ where: { id: Number(assessmentId) }, include: { questions: true } });
 
       res.status(201).json({ message: "Successfully filled assessment with questions", data: filledAssessment });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async deleteAssessment(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { assessmentId } = req.params;
+
+      const foundAssessment = await prisma.assessment.findFirst({ where: { id: Number(assessmentId) } });
+      if (!foundAssessment || !assessmentId) throw { name: "DataNotFound" };
+
+      await prisma.assessment.delete({ where: { id: Number(assessmentId) } });
+
+      res.status(200).json({ message: `Assessment with ID ${assessmentId} deleted successfully by admin` });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getUserResults(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { userId } = req.params;
+
+      const results = await prisma.result.findMany({ where: { userId: Number(userId) } });
+      const totalAssessment = await prisma.assessment.count();
+
+      res.status(200).json({ message: "User results retrieved successfully", data: results, total_assessment: totalAssessment });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getUserResultById(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { userId, assessmentId } = req.params;
+
+      const result = await prisma.result.findFirst({ where: { id: Number(assessmentId), userId: Number(userId) } });
+      if (!result) throw { name: "DataNotFound" };
+
+      res.status(200).json({ message: "Result data retrieved successfully", data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getAllAssessments(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const assessments = await prisma.assessment.findMany({ include: { questions: true } });
+      res.status(200).json({ message: "Assessments data retrieved successfully", data: assessments, total_assessments: assessments.length });
     } catch (err) {
       next(err);
     }

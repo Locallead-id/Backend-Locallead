@@ -1,6 +1,6 @@
 import { Request } from "express";
 export interface AuthRequest extends Request {
-  user?: { id?: number };
+  user?: { id?: number; role?: string };
 }
 
 export interface MidtransNotification {

@@ -7,19 +7,15 @@ export const authorization = async (req: AuthRequest, res: Response, next: NextF
   try {
     if (!req.user || !req.user.id) throw { name: "Unauthenticated" };
 
-    if (!req.user.id) throw { name: "Unauthenticated" };
-
-    const foundUser = await prisma.user.findUnique({
+    const foundUser = await prisma.user.findFirst({
       where: {
         id: Number(req.user.id),
       },
     });
-    if (!foundUser) {
-      throw { name: "NotFound" };
-    }
-    if (foundUser.role !== "ADMIN") {
-      throw { name: "Forbidden" };
-    }
+
+    if (!foundUser) throw { name: "Unauthenticated" };
+    if (foundUser.role !== "ADMIN" || req.user.role !== "ADMIN") throw { name: "Forbidden" };
+
     next();
   } catch (err) {
     next(err);

@@ -14,7 +14,6 @@ export class AuthController {
         data: {
           email,
           password: hashPassword(password),
-          role: "USER",
           profile: {
             create: {
               fullName: name,
