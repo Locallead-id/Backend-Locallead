@@ -1,9 +1,9 @@
 import { Router } from "express";
 import multer from "multer";
 
-import { errorHandler } from "../middlewares/errorHandler";
-import { authorization } from "../middlewares/authorization";
-import { authentication } from "../middlewares/authentication";
+import { errorHandler } from "../middlewares/error.handler";
+import { authorization } from "../middlewares/authorization.handler";
+import { authentication } from "../middlewares/authentication.handler";
 import { IndexController } from "../controllers/index.controller";
 import { router as userRouter } from "./user.routes";
 import { router as authRouter } from "./auth.routes";

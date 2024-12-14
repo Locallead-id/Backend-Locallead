@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { authorization } from "../middlewares/authorization";
+import { authorization } from "../middlewares/authorization.handler";
 import { AdminController } from "../controllers/admin.controller";
 export const router = Router();
 
