@@ -23,7 +23,7 @@ export class AssessmentController {
 
       if (!assessmentId) throw { name: "DataNotFound" };
 
-      const assessment = await prisma.assessment.findUnique({ where: { id: Number(assessmentId) }, include: { questions: true } });
+      const assessment = await prisma.assessment.findUnique({ where: { id: Number(assessmentId) }, include: { questions: { orderBy: { order: "asc" } } } });
 
       if (!assessment) throw { name: "DataNotFound" };
 

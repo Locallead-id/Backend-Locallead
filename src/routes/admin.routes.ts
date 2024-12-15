@@ -22,5 +22,6 @@ router.get("/users/:userId/assessments/:assessmentId", AdminController.getUserRe
 // ** Assessment **
 router.get("/assessments", AdminController.getAllAssessments);
 router.post("/assessments", upload.single("image"), AdminController.createAssessment);
+router.patch("/assessments/:assessmentId", upload.single("image"), AdminController.updateAssessment);
 router.put("/assessments/:assessmentId", AdminController.addQuestionAssessment);
 router.delete("/assessments/:assessmentId", AdminController.deleteAssessment);

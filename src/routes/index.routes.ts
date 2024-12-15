@@ -1,5 +1,4 @@
 import { Router } from "express";
-import multer from "multer";
 
 import { errorHandler } from "../middlewares/error.handler";
 import { authentication } from "../middlewares/authentication.handler";
@@ -11,8 +10,6 @@ import { router as adminRouter } from "./admin.routes";
 import { router as paymentRouter } from "./payment.routes";
 
 export const router = Router();
-const storage = multer.memoryStorage();
-export const upload = multer({ storage: storage });
 
 router.get("/", IndexController.home);
 router.use("/auth", authRouter);

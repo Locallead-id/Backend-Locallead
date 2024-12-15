@@ -98,7 +98,6 @@ export class AdminController {
       const { userId } = req.params;
       const foundUser = await prisma.user.findFirst({ where: { id: Number(userId) } });
       if (!foundUser) throw { name: "DataNotFound" };
-
       await prisma.user.delete({ where: { id: Number(userId) } });
 
       res.status(200).json({ message: `User  with ID ${userId} deleted successfully by admin` });
@@ -142,6 +141,36 @@ export class AdminController {
     }
   }
 
+  static async updateAssessment(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { assessmentId } = req.params;
+      const { name, description, duration, price } = req.body;
+      const image = req.file;
+
+      const foundAssessment = await prisma.assessment.findFirst({ where: { id: Number(assessmentId) } });
+      if (!foundAssessment) throw { name: "DataNotFound" };
+
+      const updatedAssessment = await prisma.assessment.update({
+        where: { id: Number(assessmentId) },
+        data: {
+          name,
+          description,
+          duration: Number(duration),
+          price: Number(price),
+        },
+      });
+
+      if (image) {
+        const imageUrl = await uploadImageFile(image, name, Number(assessmentId), "assessment");
+        await prisma.assessment.update({ where: { id: Number(assessmentId) }, data: { imageUrl } });
+      }
+
+      res.status(200).json({ message: "Assessment updated successfully by admin", data: updatedAssessment });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async addQuestionAssessment(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const userId = req.user?.id;
@@ -152,8 +181,15 @@ export class AdminController {
       if (!assessmentId) throw { name: "DataNotFound" };
       if (!userId) throw { name: "Unauthenticated" };
 
-      await prisma.question.createMany({ data: questions, skipDuplicates: true });
-      const filledAssessment = await prisma.assessment.findFirst({ where: { id: Number(assessmentId) }, include: { questions: true } });
+      await prisma.question.deleteMany({ where: { assessmentId: Number(assessmentId) } });
+      const updatedQuestions = questions.map((q: { id: number; order: number; assessmentId: number; text: string; options: {}; createdAt: Date; updatedAt: Date; type: "SCALE" | "MULTIPLE_CHOICE" | "TRUE_FALSE" }) => ({
+        ...q,
+        assessmentId: Number(assessmentId),
+        type: "SCALE",
+      }));
+      await prisma.question.createMany({ data: updatedQuestions, skipDuplicates: true });
+
+      const filledAssessment = await prisma.assessment.findFirst({ where: { id: Number(assessmentId) }, include: { questions: { orderBy: { order: "asc" } } } });
 
       res.status(201).json({ message: "Successfully filled assessment with questions", data: filledAssessment });
     } catch (err) {
@@ -204,7 +240,7 @@ export class AdminController {
 
   static async getAllAssessments(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const assessments = await prisma.assessment.findMany({ include: { questions: true } });
+      const assessments = await prisma.assessment.findMany({ include: { questions: { orderBy: { order: "asc" } } } });
       res.status(200).json({ message: "Assessments data retrieved successfully", data: assessments, total_assessments: assessments.length });
     } catch (err) {
       next(err);
