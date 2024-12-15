@@ -10,7 +10,10 @@ export class AuthController {
       if (!email) throw { name: "EmailRequired" };
       if (!password) throw { name: "PasswordRequired" };
 
-      const createdUser = await prisma.user.create({
+      const user = await prisma.user.findFirst({ where: { email } });
+      if (user) throw { name: "BadRequest" };
+
+      let createdUser = await prisma.user.create({
         data: {
           email,
           password: hashPassword(password),
@@ -21,8 +24,8 @@ export class AuthController {
           },
         },
       });
-
-      res.status(201).json({ message: "User created successfully", data: createdUser });
+      const { password: pass, ...sanitizedUser } = createdUser || {};
+      res.status(201).json({ message: "User created successfully", data: sanitizedUser });
     } catch (err) {
       next(err);
     }

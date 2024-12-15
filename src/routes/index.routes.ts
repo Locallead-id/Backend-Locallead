@@ -2,7 +2,6 @@ import { Router } from "express";
 import multer from "multer";
 
 import { errorHandler } from "../middlewares/error.handler";
-import { authorization } from "../middlewares/authorization.handler";
 import { authentication } from "../middlewares/authentication.handler";
 import { IndexController } from "../controllers/index.controller";
 import { router as userRouter } from "./user.routes";
@@ -19,6 +18,6 @@ router.get("/", IndexController.home);
 router.use("/auth", authRouter);
 router.use("/users", authentication, userRouter);
 router.use("/assessments", authentication, assessmentRouter);
-router.use("/admin", authentication, authorization, adminRouter);
+router.use("/admin", authentication, adminRouter);
 router.use("/payments", paymentRouter);
 router.use(errorHandler);

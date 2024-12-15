@@ -27,6 +27,10 @@ export const errorHandler = (err: Error, _: AuthRequest, res: Response, __: Next
       status = 400;
       message = "Some inputs are missing. Please try again.";
       break;
+    case "BadRequestExists":
+      status = 400;
+      message = "Item already exists. Please try fill it again.";
+      break;
     case "AssessmentNotStarted":
       status = 400;
       message = "You can't submit the result because the assessment hasn't started yet. Please start the assessment first.";

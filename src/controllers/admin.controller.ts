@@ -3,11 +3,12 @@ import { Response, NextFunction } from "express";
 import { AuthRequest } from "../types/types";
 import prisma from "../database/prisma";
 import { hashPassword } from "../helpers/bcrypt";
+import { uploadImageFile } from "../services/firebase.service";
 
 export class AdminController {
   static async getAllUsers(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      let users = await prisma.user.findMany({ include: { profile: true, results: true } });
+      let users = await prisma.user.findMany({ include: { profile: true, results: true }, where: { role: "USER" } });
       const totalAssessment = await prisma.assessment.count();
       users = users.map((user) => {
         return { ...user, total_results: user.results.length, total_assessments: totalAssessment };
@@ -33,9 +34,12 @@ export class AdminController {
 
   static async createUserAccount(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { email, password, name } = req.body;
+      const { email, password, fullName, isPremium } = req.body;
       if (!email) throw { name: "EmailRequired" };
       if (!password) throw { name: "PasswordRequired" };
+
+      const user = await prisma.user.findFirst({ where: { email } });
+      if (user) throw { name: "BadRequestExists" };
 
       const createdUser = await prisma.user.create({
         data: {
@@ -44,7 +48,8 @@ export class AdminController {
           role: "USER",
           profile: {
             create: {
-              fullName: name,
+              fullName,
+              isPremium: isPremium === "true" ? true : false,
             },
           },
         },
@@ -108,19 +113,28 @@ export class AdminController {
     try {
       const userId = req.user?.id;
       const { name, description, duration, price } = req.body;
-
+      const image = req.file;
+      console.log(req.file, req.body);
       if (!name || !description || !duration || !price) throw { message: "InputRequired" };
       if (!userId) throw { name: "Unauthenticated" };
 
-      const createdAssessment = await prisma.assessment.create({
+      const assessment = await prisma.assessment.findFirst({ where: { name } });
+      if (assessment) throw { name: "BadRequestExists" };
+
+      let createdAssessment = await prisma.assessment.create({
         data: {
           name,
           description,
-          duration,
-          price,
+          duration: Number(duration),
+          price: Number(price),
           userId,
         },
       });
+
+      if (image) {
+        const imageUrl = await uploadImageFile(image, name, createdAssessment.id, "assessment");
+        createdAssessment = await prisma.assessment.update({ where: { id: createdAssessment.id }, data: { imageUrl } });
+      }
 
       res.status(201).json({ message: "Assessment created successfully", data: createdAssessment });
     } catch (err) {
