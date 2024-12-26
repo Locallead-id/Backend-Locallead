@@ -39,9 +39,13 @@ export const errorHandler = (err: Error, _: AuthRequest, res: Response, __: Next
       status = 400;
       message = "You have already taken the assessment. You cannot retake the assessment.";
       break;
-    case "AlreadyPremium":
+    case "AlreadyEnrolled":
       status = 400;
-      message = "Account is already premium. You don't need to pay again.";
+      message = "You have already enrolled on the assessment module. You don't need to pay again.";
+      break;
+    case "CurrencyMinimumValue":
+      status = 400;
+      message = "IDR Currency minimum value is 100";
       break;
     case "Unauthorized":
       status = 401;
@@ -51,6 +55,10 @@ export const errorHandler = (err: Error, _: AuthRequest, res: Response, __: Next
     case "Unauthenticated":
       status = 401;
       message = "Invalid access token.";
+      break;
+    case "WrongSecretKey":
+      status = 401;
+      message = "You are unauthorized due to wrong secret key, please input the correct secret key";
       break;
     case "Forbidden":
       status = 403;

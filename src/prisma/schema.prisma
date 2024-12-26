@@ -17,6 +17,8 @@ model User {
   assessments Assessment[] // Assessments created by the user (if admin)
   results     Result[] // Results of assessments taken by the user
   payments    Payment[] // Payment records
+  enrollments Enrollment[]
+  isVerified  Boolean      @default(false)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -33,27 +35,26 @@ model Profile {
   fullName    String
   address     String?
   dateOfBirth DateTime?
-  joinDate    DateTime? // When the user joined
   imageUrl    String?
-  isPremium   Boolean   @default(false) // For payment-based premium access
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
 
 model Assessment {
-  id          Int        @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   name        String
   description String
   imageUrl    String?
   duration    Int // Duration of the assessment in minutes
-  userId      Int // Created by admin user
-  createdBy   User       @relation(fields: [userId], references: [id])
-  price       Float? // Option if price is on each module
-  isActive    Boolean    @default(true)
+  userId      Int // Created by id of admin user
+  createdBy   User         @relation(fields: [userId], references: [id])
+  price       Float
+  isActive    Boolean      @default(true)
   questions   Question[] // Questions related to this assessment
   results     Result[] // Results of the assessment
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  enrollments Enrollment[] // People enrolled on the assessment
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Question {
@@ -104,13 +105,39 @@ model Payment {
   transactionId    String        @unique // To track payments with Midtrans
   transactionToken String
   paymentMethod    String
+  enrollments      Enrollment[]
   createdAt        DateTime      @default(now())
   expireAt         DateTime
   updatedAt        DateTime      @updatedAt
+
+  @@index([status])
+  @@index([transactionId])
 }
 
 enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
+}
+
+model Enrollment {
+  id           Int              @id @default(autoincrement())
+  userId       Int
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessmentId Int
+  assessment   Assessment       @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  payment      Payment          @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  paymentId    Int
+  status       EnrollmentStatus @default(ACTIVE)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([userId, assessmentId])
+  @@index([status])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  REVOKED
+  PENDING
 }

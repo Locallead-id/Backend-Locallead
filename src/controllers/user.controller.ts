@@ -1,6 +1,7 @@
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "../types/types";
 import prisma from "../database/prisma";
+import { uploadImageFile } from "../services/firebase.service";
 
 export class UserController {
   static async getLoggedUserDetail(req: AuthRequest, res: Response, next: NextFunction) {
@@ -33,17 +34,21 @@ export class UserController {
 
       if (!foundUser) throw { name: "DataNotFound" };
 
-      // Implement Image Upload later
       const { address, dateOfBirth, imageUrl } = req.body;
+      const image = req.file;
 
       const formattedDate = new Date(dateOfBirth);
 
-      const updatedUser = await prisma.profile.update({
+      let updatedUserProfile = await prisma.profile.update({
         where: { id: Number(id) },
         data: { address, dateOfBirth: formattedDate, imageUrl },
       });
+      if (image) {
+        const imageUrl = await uploadImageFile(image, updatedUserProfile.fullName.split(" ").join("_"), updatedUserProfile.id, "profile");
+        updatedUserProfile = await prisma.profile.update({ where: { id: updatedUserProfile.id }, data: { imageUrl } });
+      }
 
-      res.status(200).json({ message: "User Data updated successfully", data: updatedUser });
+      res.status(200).json({ message: "User Data updated successfully", data: updatedUserProfile });
     } catch (err) {
       next(err);
     }

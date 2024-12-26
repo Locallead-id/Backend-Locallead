@@ -11,7 +11,7 @@ export class AuthController {
       if (!password) throw { name: "PasswordRequired" };
 
       const user = await prisma.user.findFirst({ where: { email } });
-      if (user) throw { name: "BadRequest" };
+      if (user) throw { name: "BadRequestExists" };
 
       let createdUser = await prisma.user.create({
         data: {
@@ -49,4 +49,12 @@ export class AuthController {
       next(err);
     }
   }
+
+  // static async verifyAccount(req: Request, res: Response, next: NextFunction) {
+  //   try {
+
+  //   } catch (err) {
+  //     next(err);
+  //   }
+  // }
 }

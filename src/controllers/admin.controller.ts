@@ -5,6 +5,8 @@ import prisma from "../database/prisma";
 import { hashPassword } from "../helpers/bcrypt";
 import { uploadImageFile } from "../services/firebase.service";
 
+const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY as string;
+
 export class AdminController {
   static async getAllUsers(req: AuthRequest, res: Response, next: NextFunction) {
     try {
@@ -32,9 +34,37 @@ export class AdminController {
     }
   }
 
+  static async createAdminAccount(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const { email, password, fullName, adminSecretKey } = req.body;
+      if (!email) throw { name: "EmailRequired" };
+      if (!password) throw { name: "PasswordRequired" };
+      if (adminSecretKey !== ADMIN_SECRET_KEY) throw { name: "WrongSecretKey" };
+
+      const admin = await prisma.user.findFirst({ where: { email } });
+      if (admin) throw { name: "BadRequestExists" };
+
+      const createdAdmin = await prisma.user.create({
+        data: {
+          email,
+          password: hashPassword(password),
+          role: "ADMIN",
+          profile: {
+            create: {
+              fullName,
+            },
+          },
+        },
+      });
+      res.status(201).json({ message: "Admin account created successfully", data: createdAdmin });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async createUserAccount(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { email, password, fullName, isPremium } = req.body;
+      const { email, password, fullName } = req.body;
       if (!email) throw { name: "EmailRequired" };
       if (!password) throw { name: "PasswordRequired" };
 
@@ -49,7 +79,6 @@ export class AdminController {
           profile: {
             create: {
               fullName,
-              isPremium: isPremium === "true" ? true : false,
             },
           },
         },
@@ -64,7 +93,7 @@ export class AdminController {
   static async updateUserAccount(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { userId } = req.params;
-      const { email, password, name, address, dateOfBirth, imageUrl } = req.body;
+      const { email, password, name, address, dateOfBirth } = req.body;
 
       const foundUser = await prisma.user.findFirst({ where: { id: Number(userId) } });
       if (!foundUser) throw { name: "DataNotFound" };
@@ -79,7 +108,6 @@ export class AdminController {
                 fullName: name,
                 address,
                 dateOfBirth,
-                imageUrl,
               },
             },
           },
@@ -113,12 +141,13 @@ export class AdminController {
       const userId = req.user?.id;
       const { name, description, duration, price } = req.body;
       const image = req.file;
-      console.log(req.file, req.body);
       if (!name || !description || !duration || !price) throw { message: "InputRequired" };
       if (!userId) throw { name: "Unauthenticated" };
 
       const assessment = await prisma.assessment.findFirst({ where: { name } });
+
       if (assessment) throw { name: "BadRequestExists" };
+      if (Number(price) < 100) throw { name: "CurrencyMinimumValue" };
 
       let createdAssessment = await prisma.assessment.create({
         data: {
@@ -144,11 +173,12 @@ export class AdminController {
   static async updateAssessment(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { assessmentId } = req.params;
-      const { name, description, duration, price } = req.body;
+      const { name, description, duration, price, isActive } = req.body;
       const image = req.file;
 
       const foundAssessment = await prisma.assessment.findFirst({ where: { id: Number(assessmentId) } });
       if (!foundAssessment) throw { name: "DataNotFound" };
+      if (Number(price) < 100) throw { name: "CurrencyMinimumValue" };
 
       const updatedAssessment = await prisma.assessment.update({
         where: { id: Number(assessmentId) },
@@ -157,6 +187,7 @@ export class AdminController {
           description,
           duration: Number(duration),
           price: Number(price),
+          isActive,
         },
       });
 
@@ -191,7 +222,7 @@ export class AdminController {
 
       const filledAssessment = await prisma.assessment.findFirst({ where: { id: Number(assessmentId) }, include: { questions: { orderBy: { order: "asc" } } } });
 
-      res.status(201).json({ message: "Successfully filled assessment with questions", data: filledAssessment });
+      res.status(200).json({ message: "Successfully filled assessment with questions", data: filledAssessment });
     } catch (err) {
       next(err);
     }
@@ -217,9 +248,10 @@ export class AdminController {
       const { userId } = req.params;
 
       const results = await prisma.result.findMany({ where: { userId: Number(userId) } });
-      const totalAssessment = await prisma.assessment.count();
+      const totalAssessment = await prisma.assessment.count({ where: { isActive: true } });
+      const enrollments = await prisma.enrollment.findMany({ where: { userId: Number(userId) } });
 
-      res.status(200).json({ message: "User results retrieved successfully", data: results, total_assessment: totalAssessment });
+      res.status(200).json({ message: "User results retrieved successfully", data: results, enrollments: enrollments, total_enrollments: enrollments.length, total_assessment: totalAssessment });
     } catch (err) {
       next(err);
     }
@@ -240,7 +272,9 @@ export class AdminController {
 
   static async getAllAssessments(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const assessments = await prisma.assessment.findMany({ include: { questions: { orderBy: { order: "asc" } } } });
+      const { status } = req.query;
+      const where = status ? { isActive: status === "active" } : {};
+      const assessments = await prisma.assessment.findMany({ where, include: { questions: { orderBy: { order: "asc" } } } });
       res.status(200).json({ message: "Assessments data retrieved successfully", data: assessments, total_assessments: assessments.length });
     } catch (err) {
       next(err);

@@ -11,6 +11,7 @@ export const upload = multer({ storage: storage });
 router.use(authorization);
 
 // ** Users **
+router.post("/create", AdminController.createAdminAccount);
 router.get("/users", AdminController.getAllUsers);
 router.post("/users", AdminController.createUserAccount);
 router.get("/users/:userId", AdminController.getUserById);

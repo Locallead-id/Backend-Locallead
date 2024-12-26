@@ -7,9 +7,11 @@ import prisma from "../database/prisma";
 const API_URL = process.env.API_URL as string;
 
 export class AssessmentController {
-  static async getAllAssessments(_: AuthRequest, res: Response, next: NextFunction) {
+  static async getAllAssessments(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const assessments = await prisma.assessment.findMany();
+      const { status } = req.query;
+      const where = status ? { isActive: status === "active" } : {};
+      const assessments = await prisma.assessment.findMany({ where });
 
       res.status(200).json({ message: "Assessment modules data successfully retrieved", data: assessments });
     } catch (err) {
@@ -22,8 +24,7 @@ export class AssessmentController {
       const { assessmentId } = req.params;
 
       if (!assessmentId) throw { name: "DataNotFound" };
-
-      const assessment = await prisma.assessment.findUnique({ where: { id: Number(assessmentId) }, include: { questions: { orderBy: { order: "asc" } } } });
+      const assessment = await prisma.assessment.findFirst({ where: { id: Number(assessmentId) }, include: { questions: { orderBy: { order: "asc" } } } });
 
       if (!assessment) throw { name: "DataNotFound" };
 
@@ -133,6 +134,18 @@ export class AssessmentController {
       });
 
       res.status(200).json({ message: "Assessment submitted successfully", data: updatedResult });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getAllEnrollments(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) throw { name: "Unauthenticated" };
+
+      const enrollments = await prisma.enrollment.findMany({ where: { userId: Number(userId) } });
+      res.status(200).json({ message: "Enrollments data successfully retrieved", data: enrollments });
     } catch (err) {
       next(err);
     }

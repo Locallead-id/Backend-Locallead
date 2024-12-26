@@ -9,6 +9,9 @@ app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/", (_, res, __) => {
+  res.redirect("/api");
+});
 app.use("/api/", router);
 
 if (process.env.NODE_ENV !== "test") {

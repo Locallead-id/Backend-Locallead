@@ -3,6 +3,7 @@ import { hashPassword } from "../../helpers/bcrypt";
 
 async function main() {
   // Create Users with Profiles
+
   const user1 = await prisma.user.create({
     data: {
       email: "user1@example.com",
@@ -13,9 +14,7 @@ async function main() {
           fullName: "John Doe",
           address: "123 Main St",
           dateOfBirth: new Date("1990-01-01"),
-          joinDate: new Date("2020-01-01"),
           imageUrl: "https://example.com/images/john.jpg",
-          isPremium: true,
         },
       },
     },
@@ -31,9 +30,38 @@ async function main() {
           fullName: "Jane Smith",
           address: "456 Elm St",
           dateOfBirth: new Date("1985-05-15"),
-          joinDate: new Date("2019-06-01"),
           imageUrl: "https://example.com/images/jane.jpg",
-          isPremium: true,
+        },
+      },
+    },
+  });
+
+  const user3 = await prisma.user.create({
+    data: {
+      email: "user3@example.com",
+      password: hashPassword("password456"),
+      role: "USER",
+      profile: {
+        create: {
+          fullName: "Jane Smith",
+          address: "456 Elm St",
+          dateOfBirth: new Date("1985-05-15"),
+          imageUrl: "https://example.com/images/jane.jpg",
+        },
+      },
+    },
+  });
+  const admin1 = await prisma.user.create({
+    data: {
+      email: "admin1@example.com",
+      password: hashPassword("password123"),
+      role: "ADMIN",
+      profile: {
+        create: {
+          fullName: "ADMIN 1",
+          address: "123 Main St",
+          dateOfBirth: new Date("1990-01-01"),
+          imageUrl: "https://example.com/images/john.jpg",
         },
       },
     },
@@ -42,24 +70,12 @@ async function main() {
   // Create Assessments for User 1
   const assessment1 = await prisma.assessment.create({
     data: {
-      name: "Personality Test",
-      description: "A basic personality assessment",
-      imageUrl: "https://example.com/images/assessment1.jpg",
+      name: "Post-Concussion Symptom Scale ( PCSS )",
+      description: "An assessment designed to evaluate symptoms commonly associated with concussions, helping track recovery progress.",
+      imageUrl: "https://raw.githubusercontent.com/RezaConz/Mocci/refs/heads/master/3d-geometric-abstract-background.png",
       duration: 30,
       userId: user1.id,
-      price: 0.0,
-      isActive: true,
-    },
-  });
-
-  const assessment2 = await prisma.assessment.create({
-    data: {
-      name: "Skills Evaluation",
-      description: "Evaluate your technical skills",
-      imageUrl: "https://example.com/images/assessment2.jpg",
-      duration: 45,
-      userId: user1.id,
-      price: 10.0,
+      price: 500,
       isActive: true,
     },
   });
@@ -67,10 +83,69 @@ async function main() {
   // Create Questions for Assessments
   await prisma.question.createMany({
     data: [
-      { order: 1, assessmentId: assessment1.id, text: "How often do you take risks?", type: "SCALE", options: [1, 2, 3, 4, 5] },
-      { order: 2, assessmentId: assessment1.id, text: "How well do you manage stress?", type: "SCALE", options: [1, 2, 3, 4, 5] },
-      { order: 1, assessmentId: assessment2.id, text: "Rate your coding skills.", type: "SCALE", options: [1, 2, 3, 4, 5] },
-      { order: 2, assessmentId: assessment2.id, text: "Rate your problem-solving skills.", type: "SCALE", options: [1, 2, 3, 4, 5] },
+      {
+        order: 1,
+        assessmentId: assessment1.id,
+        text: "Saya menerima umpan balik positif tentang kinerja saya dari berbagai pihak",
+        type: "SCALE",
+        options: [1, 2, 3, 4, 5],
+      },
+      {
+        order: 2,
+        assessmentId: assessment1.id,
+        text: "Saya sepenuhnya didukung oleh manajemen dalam pekerjaan saya",
+        type: "SCALE",
+        options: [1, 2, 3, 4, 5],
+      },
+      {
+        order: 3,
+        assessmentId: assessment1.id,
+        text: "Saya paling bahagia ketika saya sedang bekerja",
+        type: "SCALE",
+        options: [1, 2, 3, 4, 5],
+      },
+      {
+        order: 4,
+        assessmentId: assessment1.id,
+        text: "Saya menerima evaluasi kinerja yang baik",
+        type: "SCALE",
+        options: [1, 2, 3, 4, 5],
+      },
+      {
+        order: 5,
+        assessmentId: assessment1.id,
+        text: "Saya diterima oleh teman-teman saya",
+        type: "SCALE",
+        options: [1, 2, 3, 4, 5],
+      },
+      {
+        order: 6,
+        assessmentId: assessment1.id,
+        text: "Saya memiliki kepercayaan atasan saya",
+        type: "SCALE",
+        options: [1, 2, 3, 4, 5],
+      },
+      {
+        order: 7,
+        assessmentId: assessment1.id,
+        text: "Saya bahagia dengan kehidupan pribadi saya",
+        type: "SCALE",
+        options: [1, 2, 3, 4, 5],
+      },
+      {
+        order: 8,
+        assessmentId: assessment1.id,
+        text: "Saya menikmati aktivitas saya diluar pekerjaan",
+        type: "SCALE",
+        options: [1, 2, 3, 4, 5],
+      },
+      {
+        order: 9,
+        assessmentId: assessment1.id,
+        text: "Saya puas dengan hidup saya secara keseluruhan",
+        type: "SCALE",
+        options: [1, 2, 3, 4, 5],
+      },
     ],
   });
 
