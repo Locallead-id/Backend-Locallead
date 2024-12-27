@@ -93,34 +93,90 @@ export class AdminController {
   static async updateUserAccount(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { userId } = req.params;
-      const { email, password, name, address, dateOfBirth } = req.body;
+      const { email, password, name, address, dateOfBirth, enrollments } = req.body;
 
       const foundUser = await prisma.user.findFirst({ where: { id: Number(userId) } });
       if (!foundUser) throw { name: "DataNotFound" };
 
-      const updatedUser = await prisma.user.update({
-        data: {
-          email,
-          password: hashPassword(password),
-          profile: {
-            update: {
-              data: {
+      const updatedUser = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.update({
+          data: {
+            email,
+            ...(password && { password: hashPassword(password) }),
+            profile: {
+              update: {
                 fullName: name,
                 address,
-                dateOfBirth,
+                dateOfBirth: new Date(dateOfBirth),
               },
             },
           },
-        },
-        where: { id: Number(userId) },
+          where: { id: Number(userId) },
+          include: {
+            profile: true,
+            enrollments: {
+              include: {
+                assessment: true,
+              },
+            },
+          },
+        });
+
+        // If enrollments are provided, handle them
+        if (enrollments) {
+          // Delete existing enrollments
+          await tx.enrollment.deleteMany({
+            where: { userId: Number(userId) },
+          });
+
+          // Create new enrollments if array is not empty
+          if (enrollments.length > 0) {
+            // Create a dummy payment record for admin-created enrollments
+            const payment = await tx.payment.create({
+              data: {
+                userId: Number(userId),
+                amount: 0,
+                status: "COMPLETED",
+                transactionId: `ADMIN-${Date.now()}-${userId}`,
+                transactionToken: "ADMIN",
+                paymentMethod: "ADMIN",
+                expireAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year expiry
+              },
+            });
+
+            // Create new enrollments
+            await tx.enrollment.createMany({
+              data: enrollments.map((assessmentId: number) => ({
+                userId: Number(userId),
+                assessmentId: Number(assessmentId),
+                paymentId: payment.id,
+                status: "ACTIVE",
+              })),
+            });
+          }
+        }
+
+        return await tx.user.findUnique({
+          where: { id: Number(userId) },
+          include: {
+            profile: true,
+            enrollments: {
+              include: {
+                assessment: true,
+              },
+            },
+          },
+        });
       });
 
-      res.status(200).json({ message: "User updated successfully by admin", data: updatedUser });
+      res.status(200).json({
+        message: "User updated successfully by admin",
+        data: updatedUser,
+      });
     } catch (err) {
       next(err);
     }
   }
-
   static async deleteUserAccount(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const { userId } = req.params;
