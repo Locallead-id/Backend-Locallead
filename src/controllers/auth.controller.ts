@@ -46,6 +46,7 @@ export class AuthController {
       const { email, password } = req.body;
       if (!email) throw { name: "EmailRequired" };
       if (!password) throw { name: "PasswordRequired" };
+      if (!emailValidator(email)) throw { name: "InvalidEmail" };
 
       const foundUser = await prisma.user.findUnique({
         where: { email },
@@ -53,6 +54,14 @@ export class AuthController {
 
       if (!foundUser) throw { name: "Unauthorized" };
       if (!compareHashedPassword(password, foundUser.password)) throw { name: "Unauthorized" };
+
+      await prisma.userSession.create({
+        data: {
+          userId: foundUser.id,
+          ipAddress: req.ip as string,
+          deviceInfo: req.headers["user-agent"],
+        },
+      });
 
       res.status(200).json({ message: "Successfully login", access_token: signToken({ id: String(foundUser.id), role: foundUser.role }) });
     } catch (err) {

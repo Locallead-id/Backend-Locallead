@@ -6,18 +6,18 @@ import { AuthRequest } from "../types/types";
 import prisma from "../database/prisma";
 
 export class PaymentController {
-  static async payAccount(req: AuthRequest, res: Response, next: NextFunction) {
+  static async payMidtrans(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const userId = req.user?.id;
       const { assessmentId } = req.body;
 
       const assessment = await prisma.assessment.findFirst({
-        where: { id: assessmentId, isActive: true },
+        where: { id: Number(assessmentId), isActive: true },
       });
       if (!assessment) throw { name: "DataNotFound" };
 
       const enrollment = await prisma.enrollment.findFirst({
-        where: { assessmentId: assessmentId, userId: Number(userId) },
+        where: { assessmentId: Number(assessmentId), userId: Number(userId) },
       });
       if (enrollment) throw { name: "AlreadyEnrolled" };
 
@@ -66,7 +66,7 @@ export class PaymentController {
         await tx.enrollment.create({
           data: {
             userId: Number(userId),
-            assessmentId,
+            assessmentId: Number(assessmentId),
             paymentId: payment.id,
             status: "PENDING",
           },
@@ -121,6 +121,18 @@ export class PaymentController {
         await prisma.enrollment.updateMany({
           where: { paymentId: payment.id },
           data: { status: "ACTIVE" },
+        });
+
+        const enrollment = await prisma.enrollment.findFirst({
+          where: { paymentId: payment.id },
+        });
+        await prisma.purchaseLog.create({
+          data: {
+            userId: payment.userId,
+            assessmentId: enrollment?.assessmentId as number,
+            ipAddress: req.ip as string,
+            deviceInfo: req.headers["user-agent"],
+          },
         });
       } else if (newStatus === "FAILED") {
         await prisma.enrollment.updateMany({

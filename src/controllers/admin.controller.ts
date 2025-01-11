@@ -4,6 +4,7 @@ import { AuthRequest } from "../types/types";
 import prisma from "../database/prisma";
 import { hashPassword } from "../helpers/bcrypt";
 import { uploadImageFile } from "../services/firebase.service";
+import { emailValidator } from "../helpers/emailValidator";
 
 const ADMIN_SECRET_KEY = process.env.ADMIN_SECRET_KEY as string;
 
@@ -40,6 +41,7 @@ export class AdminController {
       if (!email) throw { name: "EmailRequired" };
       if (!password) throw { name: "PasswordRequired" };
       if (adminSecretKey !== ADMIN_SECRET_KEY) throw { name: "WrongSecretKey" };
+      if (!emailValidator(email)) throw { name: "InvalidEmail" };
 
       const admin = await prisma.user.findFirst({ where: { email } });
       if (admin) throw { name: "BadRequestExists" };
@@ -67,6 +69,7 @@ export class AdminController {
       const { email, password, fullName } = req.body;
       if (!email) throw { name: "EmailRequired" };
       if (!password) throw { name: "PasswordRequired" };
+      if (!emailValidator(email)) throw { name: "InvalidEmail" };
 
       const user = await prisma.user.findFirst({ where: { email } });
       if (user) throw { name: "BadRequestExists" };
@@ -94,6 +97,7 @@ export class AdminController {
     try {
       const { userId } = req.params;
       const { email, password, name, address, dateOfBirth, enrollments } = req.body;
+      if (!emailValidator(email)) throw { name: "InvalidEmail" };
 
       const foundUser = await prisma.user.findFirst({ where: { id: Number(userId) } });
       if (!foundUser) throw { name: "DataNotFound" };
@@ -120,6 +124,7 @@ export class AdminController {
               },
             },
           },
+          omit: { password: true },
         });
 
         // If enrollments are provided, handle them
@@ -332,6 +337,86 @@ export class AdminController {
       const where = status ? { isActive: status === "active" } : {};
       const assessments = await prisma.assessment.findMany({ where, include: { questions: { orderBy: { order: "asc" } } } });
       res.status(200).json({ message: "Assessments data retrieved successfully", data: assessments, total_assessments: assessments.length });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async getPotentialFrauds(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const suspiciousPurchases = await prisma.purchaseLog.groupBy({
+        by: ["ipAddress", "assessmentId"],
+        having: {
+          userId: {
+            _count: {
+              gt: 3,
+            },
+          },
+        },
+        _count: {
+          userId: true,
+        },
+        _min: {
+          createdAt: true,
+        },
+        _max: {
+          createdAt: true,
+        },
+      });
+
+      const fraudDetails = await Promise.all(
+        suspiciousPurchases.map(async (purchase) => {
+          const users = await prisma.purchaseLog.findMany({
+            where: {
+              ipAddress: purchase.ipAddress,
+              assessmentId: purchase.assessmentId,
+            },
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  profile: {
+                    select: {
+                      fullName: true,
+                    },
+                  },
+                },
+              },
+              assessment: {
+                select: {
+                  id: true,
+                  name: true,
+                  price: true,
+                },
+              },
+              ipAddress: true,
+              createdAt: true,
+            },
+          });
+
+          return {
+            ipAddress: purchase.ipAddress,
+            assessmentId: purchase.assessmentId,
+            assessmentName: users[0].assessment.name,
+            assessmentPrice: users[0].assessment.price,
+            totalPurchases: purchase._count.userId,
+            earliestPurchase: purchase._min.createdAt,
+            latestPurchase: purchase._max.createdAt,
+            users: users.map((user) => ({
+              userId: user.user.id,
+              email: user.user.email,
+              fullName: user.user.profile?.fullName,
+              purchasedAt: user.createdAt,
+            })),
+          };
+        })
+      );
+
+      res.status(200).json({
+        message: "Potential frauds data retrieved successfully",
+        data: fraudDetails,
+      });
     } catch (err) {
       next(err);
     }

@@ -9,18 +9,20 @@ datasource db {
 }
 
 model User {
-  id          Int          @id @default(autoincrement())
-  email       String       @unique
+  id          Int           @id @default(autoincrement())
+  email       String        @unique
   password    String
-  role        Role         @default(USER)
+  role        Role          @default(USER)
   profile     Profile?
   assessments Assessment[] // Assessments created by the user (if admin)
   results     Result[] // Results of assessments taken by the user
   payments    Payment[] // Payment records
   enrollments Enrollment[]
-  isVerified  Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  isVerified  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  UserSession UserSession[]
+  PurchaseLog PurchaseLog[]
 }
 
 enum Role {
@@ -41,20 +43,21 @@ model Profile {
 }
 
 model Assessment {
-  id          Int          @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   name        String
   description String
   imageUrl    String?
   duration    Int // Duration of the assessment in minutes
   userId      Int // Created by id of admin user
-  createdBy   User         @relation(fields: [userId], references: [id])
+  createdBy   User          @relation(fields: [userId], references: [id])
   price       Float
-  isActive    Boolean      @default(true)
+  isActive    Boolean       @default(true)
   questions   Question[] // Questions related to this assessment
   results     Result[] // Results of the assessment
   enrollments Enrollment[] // People enrolled on the assessment
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  PurchaseLog PurchaseLog[]
 }
 
 model Question {
@@ -93,7 +96,6 @@ model Result {
 enum ResultStatus {
   IN_PROGRESS
   COMPLETED
-  EXPIRED
 }
 
 model Payment {
@@ -140,4 +142,31 @@ enum EnrollmentStatus {
   ACTIVE
   REVOKED
   PENDING
+}
+
+model UserSession {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress  String
+  deviceInfo String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([ipAddress])
+}
+
+model PurchaseLog {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessmentId Int
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  ipAddress    String
+  deviceInfo   String?
+  createdAt    DateTime   @default(now())
+
+  @@index([userId])
+  @@index([ipAddress])
 }

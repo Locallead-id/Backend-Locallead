@@ -51,11 +51,38 @@ export class AssessmentController {
 
       if (!assessment) throw { name: "DataNotFound" };
 
-      // ** Assessment in progress validation **
-      const existingResult = await prisma.result.findFirst({ where: { userId, assessmentId: Number(assessmentId), status: "IN_PROGRESS" } });
+      // ** Enrollment validation **
+      const enrollment = await prisma.enrollment.findFirst({ where: { assessmentId: Number(assessmentId), userId: Number(userId) } });
+      if (!enrollment || enrollment.status === "PENDING") {
+        res.status(403).json({
+          message: "Your enrollment is not active yet, please make sure to complete your payment. If you have completed it but still can not access the module, please contact our support team.",
+          data: { assessmentId: Number(assessmentId) },
+        });
+        return;
+      }
 
-      if (existingResult) {
+      if (enrollment.status === "REVOKED") {
+        res.status(403).json({
+          message: "Your access to this module is revoked, please contact our support team for further information.",
+          data: { assessmentId: Number(assessmentId) },
+        });
+        return;
+      }
+
+      // ** Assessment in progress validation **
+      const existingResult = await prisma.result.findFirst({ where: { userId, assessmentId: Number(assessmentId) } });
+
+      // ** Assessment already taken validation **
+      if (existingResult && existingResult.status === "IN_PROGRESS") {
         res.status(200).json({ message: "Existing assessment in progress", data: existingResult });
+        return;
+      }
+
+      if (existingResult && existingResult.status === "COMPLETED") {
+        res.status(403).json({
+          message: "You have already taken this assessment",
+          data: { assessmentId: Number(assessmentId), result: existingResult },
+        });
         return;
       }
 

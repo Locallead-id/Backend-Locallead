@@ -26,3 +26,6 @@ router.post("/assessments", upload.single("image"), AdminController.createAssess
 router.patch("/assessments/:assessmentId", upload.single("image"), AdminController.updateAssessment);
 router.put("/assessments/:assessmentId", AdminController.addQuestionAssessment);
 router.delete("/assessments/:assessmentId", AdminController.deleteAssessment);
+
+// ** Potential Frauds **
+router.get("/frauds", AdminController.getPotentialFrauds);
