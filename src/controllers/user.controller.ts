@@ -1,4 +1,5 @@
 import { Response, NextFunction } from "express";
+
 import { AuthRequest } from "../types/types";
 import prisma from "../database/prisma";
 import { uploadImageFile } from "../services/firebase.service";

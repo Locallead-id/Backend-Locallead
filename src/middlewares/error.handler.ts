@@ -7,6 +7,10 @@ export const errorHandler = (err: Error, _: AuthRequest, res: Response, __: Next
   let message = "Internal server error. Please try again later.";
 
   switch (err.name as string) {
+    case "InvalidEmail":
+      status = 400;
+      message = "Invalid email format. Please input a valid email.";
+      break;
     case "EmailRequired":
       status = 400;
       message = "Please input your email!";
@@ -57,7 +61,7 @@ export const errorHandler = (err: Error, _: AuthRequest, res: Response, __: Next
       message = "Invalid access token.";
       break;
     case "WrongSecretKey":
-      status = 401;
+      status = 403;
       message = "You are unauthorized due to wrong secret key, please input the correct secret key";
       break;
     case "Forbidden":

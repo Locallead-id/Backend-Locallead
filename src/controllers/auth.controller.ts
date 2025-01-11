@@ -1,8 +1,12 @@
 import { NextFunction, Response, Request } from "express";
+
 import prisma from "../database/prisma";
 import { compareHashedPassword, hashPassword } from "../helpers/bcrypt";
-import { signToken } from "../helpers/jwt";
+import { generateVericationToken, signToken, decodeVerificationToken } from "../helpers/jwt";
+import { sendVerificationEmail } from "../services/nodemailer.service";
+import { emailValidator } from "../helpers/emailValidator";
 
+const FRONTEND_URL = process.env.FRONTEND_URL as string;
 export class AuthController {
   static async register(req: Request, res: Response, next: NextFunction) {
     try {
@@ -12,6 +16,8 @@ export class AuthController {
 
       const user = await prisma.user.findFirst({ where: { email } });
       if (user) throw { name: "BadRequestExists" };
+
+      if (!emailValidator(email)) throw { name: "InvalidEmail" };
 
       let createdUser = await prisma.user.create({
         data: {
@@ -25,7 +31,11 @@ export class AuthController {
         },
       });
       const { password: pass, ...sanitizedUser } = createdUser || {};
-      res.status(201).json({ message: "User created successfully", data: sanitizedUser });
+
+      const token = generateVericationToken(email);
+      await sendVerificationEmail(email, token);
+
+      res.status(201).json({ message: "User created successfully. Please check your email to verify your account", data: sanitizedUser });
     } catch (err) {
       next(err);
     }
@@ -50,11 +60,51 @@ export class AuthController {
     }
   }
 
-  // static async verifyAccount(req: Request, res: Response, next: NextFunction) {
-  //   try {
+  static async resendVerificationEmail(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email } = req.body;
 
-  //   } catch (err) {
-  //     next(err);
-  //   }
-  // }
+      const user = await prisma.user.findUnique({ where: email });
+
+      if (!user) throw { name: "DataNotFound" };
+      if (user.isVerified) throw { name: "BadRequest" };
+
+      const token = generateVericationToken(email);
+      await sendVerificationEmail(email, token);
+
+      console.log(`Verification email sent to ${email}`);
+
+      res.status(200).json({ message: "Verification email sent successfully" });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async verifyAccount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { token } = req.params;
+
+      if (!token) throw { name: "BadRequest" };
+
+      const decoded = decodeVerificationToken(token) as { email: string; iat: number };
+      if (!decoded) throw { name: "InvalidToken" };
+
+      const { email } = decoded;
+
+      const user = await prisma.user.update({
+        where: { email },
+        data: {
+          isVerified: true,
+        },
+      });
+
+      if (!user) throw { name: "DataNotFound" };
+
+      console.log(`User ${email} is verified successfully`);
+
+      res.redirect(`${FRONTEND_URL}/verified?email=${email}`);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

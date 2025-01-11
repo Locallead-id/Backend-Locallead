@@ -8,3 +8,11 @@ export const signToken = (payload: { id: string; role: "ADMIN" | "USER" }): stri
 export const decodeToken = (token: string) => {
   return jwt.verify(token, SECRET);
 };
+
+export const generateVericationToken = (email: string): string => {
+  return jwt.sign({ email }, SECRET, { expiresIn: "1d" });
+};
+
+export const decodeVerificationToken = (token: string) => {
+  return jwt.verify(token, SECRET);
+};
