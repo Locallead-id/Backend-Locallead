@@ -5,6 +5,7 @@ import { compareHashedPassword, hashPassword } from "../helpers/bcrypt";
 import { generateVericationToken, signToken, decodeVerificationToken } from "../helpers/jwt";
 import { sendVerificationEmail } from "../services/nodemailer.service";
 import { emailValidator } from "../helpers/emailValidator";
+import { AuthRequest } from "../types/types";
 
 const FRONTEND_URL = process.env.FRONTEND_URL as string;
 export class AuthController {
@@ -69,21 +70,20 @@ export class AuthController {
     }
   }
 
-  static async resendVerificationEmail(req: Request, res: Response, next: NextFunction) {
+  static async resendVerificationEmail(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const { email } = req.body;
-
-      const user = await prisma.user.findUnique({ where: email });
+      const userId = req.user?.id;
+      const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
 
       if (!user) throw { name: "DataNotFound" };
       if (user.isVerified) throw { name: "BadRequest" };
 
-      const token = generateVericationToken(email);
-      await sendVerificationEmail(email, token);
+      const token = generateVericationToken(user.email);
+      await sendVerificationEmail(user.email, token);
 
-      console.log(`Verification email sent to ${email}`);
+      console.log(`Verification email sent to ${user.email}`);
 
-      res.status(200).json({ message: "Verification email sent successfully" });
+      res.status(200).json({ message: `Verification email sent successfully to ${user.email}` });
     } catch (err) {
       next(err);
     }
